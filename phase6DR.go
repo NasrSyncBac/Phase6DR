@@ -28,8 +28,8 @@ func main() {
 	flag.Int64Var(&DesiredCapacity, "desired", 1, "desired capacity for an autoscaling group")
 	flag.StringVar(&Auto, "auto", "phase6-VPC-cdnadapter-EnvFile-d0qa-v079", "autoscaling group name")
 	flag.StringVar(&Desc, "desc", "phase6-VPC-cdnadapter-EnvFile-d0qa-v079", "describe an autoscling group")
-	flag.StringVar(&DNSName, "dnsname", "phase6test.aws.syncbak.com", "replaced record set")
-	flag.StringVar(&Name, "name", "phase6dr.aws.syncbak.com", "replaced with record set")
+	flag.StringVar(&DNSName, "dnsname", "phase6test.aws.syncbak.com", "DNS record set")
+	flag.StringVar(&Name, "name", "phase6dr.aws.syncbak.com", "replaced DNS record set")
 	flag.StringVar(&HosteZone, "zone", "Z219GR296HPKS6", "target zone that has the record sets")
 
 	flag.Parse()
