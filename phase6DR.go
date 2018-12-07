@@ -3,7 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
 
+	"github.com/Syncbak-Git/jsconfig"
 	"github.com/aws/aws-sdk-go/aws"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -12,30 +15,62 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 )
 
-var MaxSize int64
-var MinSize int64
-var DesiredCapacity int64
-var Auto string
-var Desc string
-var DNSName string
-var Name string
-var HosteZone string
+var (
+	maxSize         int64
+	minSize         int64
+	desiredCapacity int64
+	auto            string
+	desc            string
+	dNSName         string
+	name            string
+	hostZone        string
+	configFiles     string
+	version         bool
+	help            bool
+)
+
+const versionStr = "0.0.1"
+
+func init() {
+
+	// flag.StringVar(&configFiles, "c", "./config/default.json", "Comma-seperated list of json config files")
+	// flag.BoolVar(&version, "v", false, "print the version and exit the program")
+	// flag.BoolVar(&version, "version", false, "print the version adn exit the program")
+	// flag.BoolVar(&help, "h", false, "prints this helpful text")
+
+	flag.Int64Var(&maxSize, "max", 0, "maximum size for an autoscaling group")
+	flag.Int64Var(&minSize, "min", 0, "minuim size for an autoscaling group")
+	flag.Int64Var(&desiredCapacity, "desired", 0, "desired capacity for an autoscaling group")
+	flag.StringVar(&auto, "auto", "", "autoscaling group name")
+	flag.StringVar(&desc, "desc", "", "describe an autoscling group")
+	flag.StringVar(&dNSName, "dnsname", "", "DNS record set")
+	flag.StringVar(&name, "name", "", "replaced DNS record set")
+	flag.StringVar(&hostZone, "zone", "", "target zone that has the record sets")
+}
 
 func main() {
 
-	flag.Int64Var(&MaxSize, "max", 1, "maximum size for an autoscaling group")
-	flag.Int64Var(&MinSize, "min", 1, "minuim size for an autoscaling group")
-	flag.Int64Var(&DesiredCapacity, "desired", 1, "desired capacity for an autoscaling group")
-	flag.StringVar(&Auto, "auto", "phase6-VPC-cdnadapter-EnvFile-d0qa-v079", "autoscaling group name")
-	flag.StringVar(&Desc, "desc", "phase6-VPC-cdnadapter-EnvFile-d0qa-v079", "describe an autoscling group")
-	flag.StringVar(&DNSName, "dnsname", "phase6test.aws.syncbak.com", "DNS record set")
-	flag.StringVar(&Name, "name", "phase6dr.aws.syncbak.com", "replaced DNS record set")
-	flag.StringVar(&HosteZone, "zone", "Z219GR296HPKS6", "target zone that has the record sets")
-
+	if version {
+		fmt.Printf("%s\n", versionStr)
+		os.Exit(0)
+	}
+	//log.Info("config files %s", configFiles)
+	err := jsconfig.InitFromFiles("./config/default.json")
 	flag.Parse()
 
-	describeRateLimit()
-	describeAutoScaling()
+	maxSize = int64(jsconfig.S.FindNumber("max"))
+	minSize = int64(jsconfig.S.FindNumber("min"))
+	desiredCapacity = int64(jsconfig.S.FindNumber("desired"))
+	auto = jsconfig.S.FindString("auto")
+	dNSName = jsconfig.S.FindString("dnsname")
+	name = jsconfig.S.FindString("name")
+	hostZone = jsconfig.S.FindString("zone")
+
+	if err != nil {
+		log.Fatalf("Could not read config setting from %s: %s", configFiles, err)
+	}
+	//describeRateLimit()
+	//describeAutoScaling()
 	updateAutoScaling()
 	updateRecordSets()
 }
@@ -65,7 +100,7 @@ func describeAutoScaling() {
 	svc := autoscaling.New(session.New())
 	input := &autoscaling.DescribeAutoScalingGroupsInput{
 		AutoScalingGroupNames: []*string{
-			aws.String(Desc),
+			aws.String(desc),
 		},
 	}
 	result, err := svc.DescribeAutoScalingGroups(input)
@@ -91,10 +126,10 @@ func updateAutoScaling() {
 
 	svc := autoscaling.New(session.New())
 	input := &autoscaling.UpdateAutoScalingGroupInput{
-		AutoScalingGroupName: aws.String(Auto),
-		MaxSize:              &MaxSize,
-		MinSize:              &MinSize,
-		DesiredCapacity:      &DesiredCapacity,
+		AutoScalingGroupName: aws.String(auto),
+		MaxSize:              &maxSize,
+		MinSize:              &minSize,
+		DesiredCapacity:      &desiredCapacity,
 	}
 
 	result, err := svc.UpdateAutoScalingGroup(input)
@@ -126,18 +161,18 @@ func updateRecordSets() {
 					Action: aws.String("UPSERT"),
 					ResourceRecordSet: &route53.ResourceRecordSet{
 						AliasTarget: &route53.AliasTarget{
-							DNSName:              aws.String(DNSName),
+							DNSName:              aws.String(dNSName),
 							EvaluateTargetHealth: aws.Bool(false),
-							HostedZoneId:         aws.String(HosteZone),
+							HostedZoneId:         aws.String(hostZone),
 						},
-						Name: aws.String(Name),
+						Name: aws.String(name),
 						Type: aws.String("A"),
 					},
 				},
 			},
 			Comment: aws.String("Switch dns name for testing purposes"),
 		},
-		HostedZoneId: aws.String(HosteZone),
+		HostedZoneId: aws.String(hostZone),
 	}
 
 	result, err := svc.ChangeResourceRecordSets(input)
