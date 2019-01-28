@@ -1,0 +1,9 @@
+{
+    "DNSName": "phase6test.aws.syncbak.com",
+    "Name": "phase6dr.aws.syncbak.com",
+    "HostZone": "Z219GR296HPKS6",
+    "Max": 0,
+    "Min": 0,
+    "DesiredCapacity": 0,
+    "Auto": "phase6-VPC-cdnadapter-EnvFile-d0qa-v081"
+}

@@ -2,14 +2,14 @@
     "HostedDomain": {
         "dnsname": "phase6test.aws.syncbak.com",
         "name": "phase6dr.aws.syncbak.com",
-        "zone": "Z219GR296HPKS6"
+        "hostZone": "Z219GR296HPKS6"
     },
-    "AutoScaling": {
+    "Phase7Auto": {
         "max": 0,
         "min": 0,
         "desired": 0,
-        "auto": "phase6-VPC-cdnadapter-EnvFile-d0qa-v081",
-        "desc": "phase6-VPC-cdnadapter-EnvFile-d0qa-v081"
+        "auto": "phase6-VPC-cdnadapter-EnvFile-d0qa-v080",
+        "desc": "phase6-VPC-cdnadapter-EnvFile-d0qa-v080"
     }
-
+    
 }
